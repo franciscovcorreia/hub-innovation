@@ -1,0 +1,54 @@
+name: Recolha de notícias
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # de 6 em 6 horas (hora UTC)
+  workflow_dispatch:          # também pode ser corrida à mão no separador Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: recolha
+  cancel-in-progress: false
+
+jobs:
+  recolher:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Recolher notícias
+        run: python database_and_scraper.py
+
+      - name: Fechar a base de dados (sem ficheiros temporários)
+        run: |
+          python - <<'PY'
+          import sqlite3
+          c = sqlite3.connect("noticias_hub.db")
+          c.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+          c.close()
+          PY
+          rm -f noticias_hub.db-wal noticias_hub.db-shm
+
+      - name: Guardar no repositório (só se mudou)
+        run: |
+          git config user.name "hub-recolha"
+          git config user.email "hub-recolha@users.noreply.github.com"
+          git add noticias_hub.db
+          if git diff --cached --quiet; then
+            echo "Sem alterações."
+          else
+            git commit -m "Atualização automática das notícias"
+            git pull --rebase
+            git push
+          fi
