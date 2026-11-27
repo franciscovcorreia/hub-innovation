@@ -772,7 +772,7 @@ def main() -> None:
         )
     st.markdown(f'<h1 class="hub-titulo">{logo_html()}<span>Hub de Inovação</span></h1>', unsafe_allow_html=True)
 
-    st.text_input("Pesquisar", key="f_pesquisa", placeholder="🔎 Pesquisar no título e no resumo (ex.: 5G, data center, Tekever)",
+    st.text_input("Pesquisar", key="f_pesquisa", placeholder="🔎 Pesquisar no título e no resumo (ex.: 5G, operador, licença, satélite)",
                   label_visibility="collapsed")
     categorias = desenhar_filtro_categorias()
     filtros = desenhar_barra_lateral()
